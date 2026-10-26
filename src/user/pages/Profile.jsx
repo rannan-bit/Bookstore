@@ -1,13 +1,95 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import UserHeader from '../components/UserHeader'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons'
+import axiosInstance from '../../api/axiosinstance'
+import Edit from '../components/Edit'
+import { toast } from 'react-toastify'
+import { addBookAPI } from '../../services/allAPI'
+
+
 
 function Profile() {
     const [sellBookStatus, setSellBokkStatus] = useState(true)
     const [bookStatus, setBookStatus] = useState(false)
     const [PurchaseHistory, setPurchaseHistory] = useState(false)
-    const [modalStatus, setModalStatus] = useState(false)
+
+    const [token, setToken] = useState("")
+    const [userDp, setUserDp] = useState("")
+    const [userId, setUserId] = useState("")
+    const [userName, setUserName] = useState("")
+    const [userBio, setUserBio] = useState("")
+
+
+    const [bookDetails, setBookDetails] = useState({ title: "", author: "", pages: "", imageUrl: "", price: "", discountPrice: "", abstract: "", publisher: "", isbn: "", language: "", category: "", uploadImages: [] })
+    const [preview, setPreview] = useState("")
+    const [previewList, setPreviewList] = useState([])
+
+    console.log(bookDetails);
+    console.log(preview);
+    console.log(previewList);
+
+
+
+
+    const handleFileUpload = (e) => {
+        const imgFile = e.target.files[0]
+        setBookDetails({ ...bookDetails, uploadImages: [...bookDetails?.uploadImages, imgFile] })
+        const url = URL.createObjectURL(imgFile)
+        setPreview(url)
+        setPreviewList([...previewList, url])
+    }
+
+    const resetForm = () => {
+        setBookDetails({ title: "", author: "", pages: "", imageUrl: "", price: "", discountPrice: "", abstract: "", publisher: "", isbn: "", language: "", category: "", uploadImages: [] })
+        setPreview("")
+        setPreviewList([])
+    }
+
+    const handleAddBook = async () => {
+        const { title, author, pages, imageUrl, price, discountPrice, abstract, publisher, isbn, language, category, uploadImages } = bookDetails
+        if (!title && !author && !pages && !imageUrl && !price && !discountPrice && !abstract && !publisher && !isbn && !language && !category && uploadImages.length > 0) {
+            toast.warning("fille the form completely")
+        }
+        else {
+            const reqBody = new FormData()
+            for (let key in bookDetails) {
+                if (key != "uploadImages") {
+                    reqBody.append(key, bookDetails[key])
+                }
+                else {
+                    bookDetails.uploadImages.forEach(file => {
+                        reqBody.append("uploadImages", file)
+
+                    })
+                }
+            }
+            const result = await addBookAPI(reqBody)
+            console.log(result);
+            if (result.status == 200) {
+                toast.success("Book added successfully")
+            }
+            else{
+                toast.error(result.response)
+            }
+            resetForm()
+
+        }
+    }
+
+
+
+    useEffect(() => {
+        if (sessionStorage.getItem("user") && sessionStorage.getItem("token")) {
+            const userToken = sessionStorage.getItem("token")
+            const user = JSON.parse(sessionStorage.getItem("user"))
+            setUserDp(user.picture)
+            setUserName(user.username)
+            setUserBio(user.bio)
+            console.log(user);
+
+        }
+    }, [token])
 
     return (
         <div>
@@ -15,15 +97,16 @@ function Profile() {
             <div>
                 <div className='bg-blue-950 py-5 h-90 '>
                     <div className='md:m-10 h-[230px] w-[230px] '>
-                        <img src="https://tse4.mm.bing.net/th/id/OIP.72ZHg4fRmZIz93Cdxpy-OQHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" style={{ borderRadius: '50%', height: '200px', width: '200px' }} className='mt-60' />
+                        <img src={userDp == "" ? 'https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg' : userDp?.startsWith('https://lh3.googleusercontent.com/') ? userDp : `${axiosInstance.defaults.baseURL}/uploads/${userDp}`} alt="" style={{ borderRadius: '50%', height: '200px', width: '200px' }} className='mt-60' />
                     </div>
 
                 </div>
                 <div className='flex justify-between mx-10 mt-30'>
-                    <h1 className='font-bold'>Username</h1>
-                    <button className='bg-blue-900 text-white p-2' onClick={() => setModalStatus(true)}>Edit</button>
+                    <h1 className='font-bold'>{userName}</h1>
+                    <Edit />
+
                 </div>
-                <p className='mx-10 text-justify my-5'>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Fugiat ab, temporibus incidunt, officia, dolorum veritatis nam vitae nihil pariatur quam error impedit voluptatum omnis. Asperiores dicta distinctio quasi nulla porro! Lorem ipsum dolor sit amet, consectetur adipisicing elit. Error facere rerum velit accusamus numquam tempore, ipsa dicta quis, autem voluptates omnis veritatis, sunt labore? Amet cupiditate reiciendis molestias rerum facere?</p>
+                <p className='mx-10 text-justify my-5'>{userBio == "" ? 'No user bio' : userBio}</p>
 
 
                 {/*tabs*/}
@@ -40,29 +123,48 @@ function Profile() {
                         <h1 className='text-center p-5 font-bold text-xl'>Book Details</h1>
                         <form className='md:grid grid-cols-2'>
                             <div className='p-3 flex flex-col'>
-                                <input type="text" placeholder='Title' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Author' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='No of Pages' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Image URL' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Price' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Discount Price' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, title: e.target.value })} type="text" placeholder='Title' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, author: e.target.value })} type="text" placeholder='Author' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, pages: e.target.value })} type="text" placeholder='No of Pages' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, imageUrl: e.target.value })} type="text" placeholder='Image URL' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, price: e.target.value })} type="text" placeholder='Price' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, discountPrice: e.target.value })} type="text" placeholder='Discount Price' className='bg-white my-4 mx-3 p-2 rounded' />
 
                             </div>
                             <div className='p-3 flex flex-col'>
-                                <input type="text" placeholder='Publisher' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Lan' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='No of Pages' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Image URL' className='bg-white my-4 mx-3 p-2 rounded' />
-                                <input type="text" placeholder='Price' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, publisher: e.target.value })} type="text" placeholder='Publisher' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, language: e.target.value })} type="text" placeholder='Language' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, isbn: e.target.value })} type="text" placeholder='ISBN' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, category: e.target.value })} type="text" placeholder='Category' className='bg-white my-4 mx-3 p-2 rounded' />
+                                <input onChange={(e) => setBookDetails({ ...bookDetails, abstract: e.target.value })} type="text" placeholder='Abstract' className='bg-white my-4 mx-3 p-2 rounded' />
                                 <div className='flex justify-center items-center m-5'>
-                                    <input type="file" id='img' className='hidden' multiple />
+                                    <input onChange={(e) => handleFileUpload(e)} type="file" id='img' className='hidden' multiple />
                                     <label htmlFor="img">
-                                        <img src="https://cdn.pixabay.com/photo/2016/01/03/00/43/upload-1118929_1280.png" alt="" style={{ height: '100px', width: '100px' }} />
+                                        <img src={preview ? preview : "https://cdn.pixabay.com/photo/2016/01/03/00/43/upload-1118929_1280.png"} alt="" style={{ height: '100px', width: '100px' }} />
                                     </label>
                                 </div>
+                                {/*display uploaded images */}
+                                {
+                                    preview &&
+                                    <div className='flex justify-center items-center m-5'>
+                                        <input onChange={(e) => handleFileUpload(e)} type="file" id='img' className='hidden' multiple />
+                                        <label htmlFor="img">
+                                            <div className='mb-3 flex items-center justify-center pt-5'>
+                                                {
+                                                    previewList?.map(url => {
+                                                        <img src={url} className='mx-2' alt="" style={{ height: '70px', width: '70px' }} />
+                                                    })
+                                                }
+                                            </div>
+
+                                        </label>
+                                        {
+                                            previewList?.length < 3 &&
+                                            <FontAwesomeIcon icon={faPlus} className='ms-5 text-3xl' />}
+                                    </div>}
                                 <div className='flex justify-end m-3'>
-                                    <button className='bg-gray-700 p-2 rounded mx-2'>RESET</button>
-                                    <button className='bg-blue-600 p-2 rounded mx-2'>SUBMIT</button>
+                                    <button className='bg-gray-700 p-2 rounded mx-2' onClick={resetForm}>RESET</button>
+                                    <button className='bg-blue-600 p-2 rounded mx-2' onClick={handleAddBook}>SUBMIT</button>
                                 </div>
 
                             </div>
@@ -72,37 +174,7 @@ function Profile() {
                     </div>}
             </div>
 
-            {/*modal */}
 
-            {
-                modalStatus &&
-                <div className='relative z-10'>
-
-                    <div className='bg-gray-500/75 inset-0 fixed '>
-                        <div className='flex min-h-screen justify-center items-center'>
-                            <div className='bg-blue-400  md:mx-50 w-full'>
-                                <div className='flex bg-black items-center justify-between text-white p-3'>
-                                    <h1>Update Profile</h1>
-                                    <FontAwesomeIcon icon={faXmark} onClick={() => setModalStatus(false)} />
-                                </div>
-                                <div className='flex justify-center items-center my-10'>
-                                    <img src="https://tse4.mm.bing.net/th/id/OIP.72ZHg4fRmZIz93Cdxpy-OQHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} />
-                                </div>
-                                <div className='flex flex-col p-3'>
-                                    <input type="text" placeholder='Username' className='bg-white my-2 p-2 rounded' />
-                                    <input type="text" placeholder='Password' className='bg-white my-2 p-2 rounded' />
-                                    <input type="text" placeholder='Password' className='bg-white my-2 p-2 rounded' />
-                                    <input type="text" placeholder='Bookstore User' className='bg-white my-2 p-2 rounded' />
-                                </div>
-                                <div className='bg-white p-2 flex justify-end'>
-                                    <button className='bg-gray-800 text-white p-1 rounded mx-2'>Reset</button>
-                                    <button className='bg-blue-800 p-1 rounded text-white'>Update</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
 
             {
                 bookStatus &&

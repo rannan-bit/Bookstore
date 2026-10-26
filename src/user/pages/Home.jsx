@@ -1,12 +1,26 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import UserHeader from '../components/UserHeader'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { Link } from 'react-router-dom'
+import { getHomeBookAPI } from '../../services/allAPI'
 
 
 
 function Home() {
+
+    const [homeBooks, setHomeBooks] = useState([])
+
+    const getBooks = async () => {
+        const res = await getHomeBookAPI()
+        if (res.status == 200) {
+            setHomeBooks(res.data)
+        }
+    }
+
+    useEffect(() => {
+        getBooks()
+    }, [])
     return (
         <div>
             <UserHeader />
@@ -45,7 +59,7 @@ function Home() {
                         <h1 className='text-xl font-bold'>Captivates With Every Words</h1>
                         <p className='text-justify px-10 mt-5'>Authors in a bookstore application are the visionaries behind the books that fill the shelves, each contributing their own unique voice, creativity, and perspective to the world of literature. Whether writing fiction, non-fiction, poetry, or educational works, authors bring stories, ideas, and knowledge to life in ways that resonate with readers of all backgrounds.
 
-                        Their work spans a wide array of genres, from thrilling mysteries and heartwarming romances to thought-provoking memoirs and insightful self-help books. Through their words, authors not only entertain and inform but also inspire and challenge readers to think deeply, reflect, and grow. In a bookstore application, authors' works become accessible to readers everywhere, offering a diverse and rich tapestry of voices and experiences, all of which contribute to the evolving landscape of modern literature.
+                            Their work spans a wide array of genres, from thrilling mysteries and heartwarming romances to thought-provoking memoirs and insightful self-help books. Through their words, authors not only entertain and inform but also inspire and challenge readers to think deeply, reflect, and grow. In a bookstore application, authors' works become accessible to readers everywhere, offering a diverse and rich tapestry of voices and experiences, all of which contribute to the evolving landscape of modern literature.
 
                         </p>
                     </div>
@@ -58,7 +72,7 @@ function Home() {
                 <h1 className='text-3xl font-bold'>TESTIMONIALS</h1>
                 <h1 className='text-xl mt-4'>See What Others Are Saying</h1>
                 <div className='flex flex-col justify-center items-center mt-5'>
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQn9zilY2Yu2hc19pDZFxgWDTUDy5DId7ITqA&s" alt="" style={{height:'100px',width:'100px',borderRadius:'50%'}}/>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQn9zilY2Yu2hc19pDZFxgWDTUDy5DId7ITqA&s" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} />
                     <h3 className='text-xl font-bold my-5'>Teressa Joy</h3>
                     <p className='text-justify px-10'>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Assumenda earum quos quam est commodi doloribus sapiente! Tempora fuga perspiciatis soluta assumenda nam expedita sunt vel aliquam, explicabo necessitatibus provident odit. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Soluta nobis necessitatibus fugiat quas dicta a, adipisci quasi incidunt quam optio esse, reprehenderit dolor nihil quaerat suscipit et natus delectus sint! Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deserunt, quia repellendus illum similique placeat inventore quasi molestiae, labore perferendis fugiat omnis? Beatae aliquam ratione itaque eligendi laudantium eaque saepe officia.</p>
                 </div>
