@@ -1,6 +1,6 @@
 import { faEye, faEyeSlash, faUser } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React from 'react'
+import React, { useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
@@ -9,6 +9,7 @@ import { googleloginrAPI, loginrAPI, registerAPI } from '../services/allAPI'
 import { ToastContainer, toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+import { routerContext } from '../context/RouterGuardContext'
 
 
 
@@ -16,45 +17,8 @@ import { jwtDecode } from "jwt-decode";
 
 function Auth({ register }) {
 
-  // const navigate=useNavigate()
-  // const [togglePasswordType, setTogglePasswordType] = useState(false)
+  const {setAuthorizedUser,setRole}=useContext(routerContext)
 
-  // const formik = useFormik({
-  //   initialValues: {
-  //     username: '',
-  //     email: '',
-  //     password: ''
-  //   },
-  //   validationSchema: Yup.object({
-  //     username: Yup.string().min(3, "Must be atleast three characters").required("Required"),
-  //     email: Yup.string().email("Inavalid email").required("Required"),
-  //     password: Yup.string().required("Required")
-  //   }),
-  //   onSubmit: (values) => {
-  //     console.log(values);
-  //     if(register){
-  //       handleRegister(values)
-  //     }
-  //     else{
-  //       //login
-  //     }
-
-  //   }
-  // })
-
-  // const handleRegister=async(userData)=>{
-  //   //import API call
-  //   const result=await registerAPI(userData)
-
-  //   if(result.status==200){
-  //     toast.success("Registration successfull...please login")
-
-  //   }
-  //   else if(result.status==409){
-  //     toast.error(result.response)
-
-  //   }
-  //   navigate('/login')
   const navigate = useNavigate()
   const [togglePasswordType, setTogglePasswordType] = useState(false)
 
@@ -91,11 +55,13 @@ function Auth({ register }) {
       toast.success("login successfull")
       sessionStorage.setItem("user", JSON.stringify(result.data.user))
       sessionStorage.setItem("token", result.data.token)
+      setAuthorizedUser(true)
       if (result.data.user.role == 'admin') {
         navigate('/admin-dashboard')
       }
       else {
         navigate('/')
+        setRole('user')
       }
     }
     else {
@@ -135,6 +101,8 @@ function Auth({ register }) {
       toast.success('login successfull')
       sessionStorage.setItem("user", JSON.stringify(res.data.user))
       sessionStorage.setItem("token", res.data.token)
+      setAuthorizedUser(true)
+      setRole('user')
       setTimeout(() => {
         navigate('/')
       }, 2500);

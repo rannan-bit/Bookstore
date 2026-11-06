@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -17,33 +17,53 @@ import Dashboard from './admin/pages/Dashboard'
 import Resource from './admin/pages/Resource'
 import Settings from './admin/pages/Settings'
 import Pnf from './pages/Pnf'
+import PaymentSuccess from './user/pages/PaymentSuccess'
+import PaymentFailed from './user/pages/PaymentFailed'
+import { routerContext } from './context/RouterGuardContext'
+
 
 function App() {
-  const [loading,setLoading]=useState(true)
-  useEffect(()=>{
+  const { role } = useContext(routerContext)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
     setTimeout(() => {
       setLoading(false)
-      
+
     }, 5000);
   })
 
   return (
     <>
-    <Routes>
-      <Route path='/' element={loading?<Preloader/>:<Home/>}/>
-      <Route path='/login' element={<Auth/>}/>
-      <Route path='/signup' element={<Auth register/>}/>
-      <Route path='/all-books' element={<AllBooks/>}/>
-      <Route path='/contact' element={<Contact/>}/>
-      <Route path='/profile/:id' element={<Profile/>}/>
-      <Route path='/view/:id/book' element={<ViewBook/>}/>
-      <Route path='/admin-dashboard' element={loading?<Preloader/>:<Dashboard/>}/>
-      <Route path='/admin-resources' element={<Resource/>}/>
-      <Route path='/admin-settings' element={<Settings/>}/>
-      <Route path='/*' element={<Pnf/>}/>
+      <Routes>
+        <Route path='/' element={loading ? <Preloader /> : <Home />} />
+        <Route path='/login' element={<Auth />} />
+        <Route path='/signup' element={<Auth register />} />
+        <Route path='/all-books' element={<AllBooks />} />
+        <Route path='/contact' element={<Contact />} />
 
-    </Routes>
-    <Footer/>
+        {
+          role == 'user' &&
+          <>
+            <Route path='/profile/:id' element={<Profile />} />
+            <Route path='/view/:id/book' element={<ViewBook />} />
+            <Route path='/success' element={<PaymentSuccess />} />
+            <Route path='/failed' element={<PaymentFailed />} />
+          </>
+        }
+        {
+          role == 'admin' &&
+          <>
+            <Route path='/admin-dashboard' element={<Dashboard />} />
+            <Route path='/admin-resources' element={<Resource />} />
+            <Route path='/admin-settings' element={<Settings />} />
+          </>
+        }
+
+        <Route path='/*' element={<Pnf />} />
+
+
+      </Routes>
+      <Footer />
     </>
   )
 }

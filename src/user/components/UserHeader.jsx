@@ -2,10 +2,11 @@ import { faInstagram, faSquareFacebook, faTwitter } from '@fortawesome/free-bran
 import { faUser } from '@fortawesome/free-regular-svg-icons'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axiosInstance from '../../api/axiosinstance'
+import { routerContext } from '../../context/RouterGuardContext'
 
 
 
@@ -15,16 +16,19 @@ import axiosInstance from '../../api/axiosinstance'
 
 
 function UserHeader() {
+    const { setAuthorizedUser } = useContext(routerContext)
+
     const [listStatus, setListStatus] = useState(false)
     const [token, setToken] = useState("")
     const [userDp, setUserDp] = useState("")
     const [dropDwn, setDropDwn] = useState(false)
     const [userId, setUserId] = useState("")
 
-    const navigate=useNavigate()
+    const navigate = useNavigate()
 
-    const logout=()=>{
+    const logout = () => {
         sessionStorage.clear()
+        setAuthorizedUser(false)
         setToken("")
         setUserDp("")
         setUserId("")
@@ -66,14 +70,14 @@ function UserHeader() {
                             <div>
                                 {/*profile*/}
                                 <button onClick={() => setDropDwn(!dropDwn)} className='shadow-sm round p-1'>
-                                    <img width={'40px'} height={'40px'} style={{ borderRadius: '50%' }} src={userDp == "" ? 'https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg' :userDp?.startsWith('https://lh3.googleusercontent.com/')?userDp: `${axiosInstance.defaults.baseURL}/uploads/${userDp}`} alt="" />
+                                    <img width={'40px'} height={'40px'} style={{ borderRadius: '50%' }} src={userDp == "" ? 'https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg' : userDp?.startsWith('https://lh3.googleusercontent.com/') ? userDp : `${axiosInstance.defaults.baseURL}/uploads/${userDp}`} alt="" />
                                 </button>
                                 {/*dropdown*/}
                                 {
                                     dropDwn &&
                                     <div className='absolute right-0 top-20 bg-white shadow w-40 rounded ring-black/40 p-2'>
                                         <Link to={`/profile/${userId}`} className='p-2'>Profile</Link>
-                                        <button className='p-2 block'onClick={logout}>Logout</button>
+                                        <button className='p-2 block' onClick={logout}>Logout</button>
                                     </div>
                                 }
                             </div>
@@ -96,7 +100,7 @@ function UserHeader() {
                             <div>
                                 {/*profile*/}
                                 <button onClick={() => setDropDwn(!dropDwn)} className='shadow-sm round p-1'>
-                                    <img width={'40px'} height={'40px'} style={{ borderRadius: '50%' }} src={userDp == "" ? 'https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg' : userDp?.startsWith('https://lh3.googleusercontent.com/')?userDp: `${axiosInstance.defaults.baseURL}/uploads/${userDp}`} alt="" />
+                                    <img width={'40px'} height={'40px'} style={{ borderRadius: '50%' }} src={userDp == "" ? 'https://static.vecteezy.com/system/resources/previews/021/548/095/original/default-profile-picture-avatar-user-avatar-icon-person-icon-head-icon-profile-picture-icons-default-anonymous-user-male-and-female-businessman-photo-placeholder-social-network-avatar-portrait-free-vector.jpg' : userDp?.startsWith('https://lh3.googleusercontent.com/') ? userDp : `${axiosInstance.defaults.baseURL}/uploads/${userDp}`} alt="" />
                                 </button>
                                 {/*dropdown*/}
                                 {

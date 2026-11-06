@@ -5,7 +5,8 @@ import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons'
 import axiosInstance from '../../api/axiosinstance'
 import Edit from '../components/Edit'
 import { toast } from 'react-toastify'
-import { addBookAPI } from '../../services/allAPI'
+import { addBookAPI, getAbstractAPI, getBooksAPI, getUserBooksAPI, getUserBoughtBooksAPI } from '../../services/allAPI'
+import useDebounce from '../../hooks/useDebounce'
 
 
 
@@ -13,10 +14,10 @@ function Profile() {
     const [sellBookStatus, setSellBokkStatus] = useState(true)
     const [bookStatus, setBookStatus] = useState(false)
     const [PurchaseHistory, setPurchaseHistory] = useState(false)
+    const [purchasedBooks, setPurchasedBooks] = useState([])
 
     const [token, setToken] = useState("")
     const [userDp, setUserDp] = useState("")
-    const [userId, setUserId] = useState("")
     const [userName, setUserName] = useState("")
     const [userBio, setUserBio] = useState("")
 
@@ -25,9 +26,20 @@ function Profile() {
     const [preview, setPreview] = useState("")
     const [previewList, setPreviewList] = useState([])
 
+    const debouncedTitileSearch = useDebounce(bookDetails.title, 500)
+
     console.log(bookDetails);
     console.log(preview);
     console.log(previewList);
+
+    const [uploadBooks, setUploadBooks] = useState([])
+
+    const getUserBooks = async () => {
+        const res = await getUserBooksAPI()
+        if (res.status == 200) {
+            setUploadBooks(res.data)
+        }
+    }
 
 
 
@@ -48,10 +60,7 @@ function Profile() {
 
     const handleAddBook = async () => {
         const { title, author, pages, imageUrl, price, discountPrice, abstract, publisher, isbn, language, category, uploadImages } = bookDetails
-        if (!title && !author && !pages && !imageUrl && !price && !discountPrice && !abstract && !publisher && !isbn && !language && !category && uploadImages.length > 0) {
-            toast.warning("fille the form completely")
-        }
-        else {
+        if (title && author && pages && imageUrl && price && discountPrice && abstract && publisher && isbn && language && category && uploadImages.length > 0) {
             const reqBody = new FormData()
             for (let key in bookDetails) {
                 if (key != "uploadImages") {
@@ -64,18 +73,43 @@ function Profile() {
                     })
                 }
             }
+
+
             const result = await addBookAPI(reqBody)
             console.log(result);
             if (result.status == 200) {
                 toast.success("Book added successfully")
             }
-            else{
+            else {
                 toast.error(result.response)
             }
             resetForm()
-
         }
+        else {
+            toast.warning("fill the form completely")
+        }
+
+
     }
+
+    const userBoughtBook = async () => {
+        const res = await getUserBoughtBooksAPI()
+        console.log(res);
+        if (res.status == 200) {
+            setPurchasedBooks(res.data)
+        }
+
+    }
+
+    const generateBookAbstract = async () => {
+        const res = await getAbstractAPI(debouncedTitileSearch)
+        console.log(res);
+        if (res.status == 200) {
+            setBookDetails({ ...bookDetails, abstract: res.data.content })
+        }
+
+    }
+
 
 
 
@@ -86,10 +120,27 @@ function Profile() {
             setUserDp(user.picture)
             setUserName(user.username)
             setUserBio(user.bio)
-            console.log(user);
+            // console.log(user);
 
         }
     }, [token])
+
+    useEffect(() => {
+        if (bookStatus) {
+            getUserBooks()
+        }
+        else if (PurchaseHistory) {
+            userBoughtBook()
+        }
+    }, [bookStatus, PurchaseHistory])
+
+    useEffect(() => {
+        if (debouncedTitileSearch) {
+            console.log("gemini api call");
+            generateBookAbstract()
+
+        }
+    }, [debouncedTitileSearch])
 
     return (
         <div>
@@ -147,21 +198,25 @@ function Profile() {
                                 {
                                     preview &&
                                     <div className='flex justify-center items-center m-5'>
-                                        <input onChange={(e) => handleFileUpload(e)} type="file" id='img' className='hidden' multiple />
-                                        <label htmlFor="img">
-                                            <div className='mb-3 flex items-center justify-center pt-5'>
-                                                {
-                                                    previewList?.map(url => {
-                                                        <img src={url} className='mx-2' alt="" style={{ height: '70px', width: '70px' }} />
-                                                    })
-                                                }
-                                            </div>
-
-                                        </label>
+                                        {
+                                            previewList?.map(url => {
+                                                <img src={url} alt="" className='h-14 w-14 rounded object-cover sm:h-[70px] sm:w-[70px]' />
+                                            })
+                                        }
                                         {
                                             previewList?.length < 3 &&
-                                            <FontAwesomeIcon icon={faPlus} className='ms-5 text-3xl' />}
-                                    </div>}
+                                            <label htmlFor="img">
+                                                <input onChange={(e) => handleFileUpload(e)} type="file" id='img' className='hidden' multiple />
+                                                <FontAwesomeIcon icon={faPlus} className='ms-5 text-3xl' />
+                                            </label>
+                                        }
+
+
+                                        {/* {
+                                            previewList?.length < 3 &&
+                                            <FontAwesomeIcon icon={faPlus} className='ms-5 text-3xl' />} */}
+                                    </div>
+                                }
                                 <div className='flex justify-end m-3'>
                                     <button className='bg-gray-700 p-2 rounded mx-2' onClick={resetForm}>RESET</button>
                                     <button className='bg-blue-600 p-2 rounded mx-2' onClick={handleAddBook}>SUBMIT</button>
@@ -178,47 +233,74 @@ function Profile() {
 
             {
                 bookStatus &&
-                <div className='bg-gray-500/75 md:mx-40 p-5 rounded flex my-20'>
-                    <div>
-                        <h1 className='text-xl font-bold my-5'>RICH DAD AND POOR DAD</h1>
-                        <h1 className='text-xl font-bold my-5'>Author</h1>
-                        <h3 className='text-blue-600'>$14.99</h3>
-                        <p className='text-justify my-5'>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor, odit perspiciatis sequi rerum veniam voluptates nihil pariatur eum, itaque voluptatibus, blanditiis labore eius atque quibusdam deserunt quis error eveniet magnam.</p>
+                <div>
+                    {
+                        uploadBooks.length > 0 ?
+                            uploadBooks?.map(book => (
+                                <div className='bg-gray-500/75 md:mx-40 p-5 rounded flex my-20'>
+                                    <div>
+                                        <h1 className='text-xl font-bold my-5'>{book.title}</h1>
+                                        <h1 className='text-xl font-bold my-5'>{book.author}</h1>
+                                        <h3 className='text-blue-600'>{book.price}</h3>
+                                        <p className='text-justify my-5'>{book.abstract}</p>
 
-                        <div className='flex flex-col p-5'>
-                            <img src="https://media.istockphoto.com/vectors/red-rubber-stamp-icon-on-transparent-background-vector-id851180540?k=20&m=851180540&s=612x612&w=0&h=pzXsrANYtP_gAE2qfH9jCd7rOoO7jbV-NqSdzWd4Q74=" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} />
-                            <img src="https://tse4.mm.bing.net/th/id/OIP.IdZ5DE_sZqAbSG7hs3Tn6wHaHa?r=0&w=900&h=900&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} className='mt-3' />
-                        </div>
-                    </div>
-                    <div className='m-5'>
-                        <img src="https://tse1.mm.bing.net/th/id/OIP.hUNBARsl5-RoOLD6hbhV2AHaLG?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" className='h-[300px] w-[300px]' />
-                        <div className='flex justify-end mt-3'>
-                            <button className='bg-red-800 text-white p-2 rounded'>Delete</button>
-                        </div>
-                    </div>
+                                        <div className='flex flex-col p-5'>
+                                            {
+                                                book?.status == "pending" ?
+                                                    <img src="https://media.istockphoto.com/vectors/red-rubber-stamp-icon-on-transparent-background-vector-id851180540?k=20&m=851180540&s=612x612&w=0&h=pzXsrANYtP_gAE2qfH9jCd7rOoO7jbV-NqSdzWd4Q74=" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} />
+                                                    :
+                                                    book?.status == "approved" ?
+                                                        <img src="https://tse4.mm.bing.net/th/id/OIP.IdZ5DE_sZqAbSG7hs3Tn6wHaHa?r=0&w=900&h=900&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} className='mt-3' />
+                                                        :
+                                                        <img src="https://media.istockphoto.com/id/833786480/vector/rubber-stamp-black-and-white-icon-set-on-transparent-background.jpg?s=612x612&w=0&k=20&c=KnlnCR1Y8N9ctwOzQ7vu3yq_uRbsZMW-VWGfgQdTO80=" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} />
 
+                                            }
+                                        </div>
+                                    </div>
+                                    <div className='m-5'>
+                                        <img src={book.imageUrl} alt="" className='h-[300px] w-[300px]' />
+                                        <div className='flex justify-end mt-3'>
+                                            <button className='bg-red-800 text-white p-2 rounded'>Delete</button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            ))
+                            :
+                            <p className='text-center text-xl font-bold'>No books uploaded</p>
+                    }
                 </div>
+
             }
 
 
             {
                 PurchaseHistory &&
-                <div className='bg-gray-500/75 md:mx-40 p-5 rounded flex my-20 justify-between'>
-                    <div>
-                        <h1 className='text-xl font-bold my-5'>RICH DAD AND POOR DAD</h1>
-                        <h1 className='text-xl font-bold my-5'>Author</h1>
-                        <h3 className='text-blue-600'>$14.99</h3>
-                        <div className='flex flex-col p-5'>
-                            <img src="https://media.istockphoto.com/id/833786480/vector/rubber-stamp-black-and-white-icon-set-on-transparent-background.jpg?s=612x612&w=0&k=20&c=KnlnCR1Y8N9ctwOzQ7vu3yq_uRbsZMW-VWGfgQdTO80=" alt="" style={{ height: '100px', width: '100px', borderRadius: '50%' }} />
+                <div className='my-2 rounded p-4 shadow sm:p-6 lg:p-10'>
+                    {purchasedBooks.length > 0 ?
+                        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+                            {purchasedBooks.map(book => (
+                                <div key={book._id} className='flex h-full flex-col overflow-hidden rounded-lg bg-gray-100 shadow-sm'>
+                                    <div className='flex flex-1 flex-col p-4 sm:p-5'>
+                                        <h2 className='break-words text-lg font-bold sm:text-xl'>{book.title}</h2>
+                                        <p className='mt-2 break-words text-gray-700'>{book.author}</p>
+                                        <p className='mt-2 font-semibold text-blue-600'>
+                                            ${book.discountPrice ?? book.price}
+                                        </p>
+                                    </div>
+                                    <div className='px-4 pb-4 sm:px-5 sm:pb-5'>
+                                        <img
+                                            src={book.imageUrl}
+                                            alt={book.title || 'Purchased book cover'}
+                                            className='h-56 w-full rounded object-contain sm:h-64'
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-                    <div className='m-5 flex items-center'>
-                        <img src="https://tse1.mm.bing.net/th/id/OIP.hUNBARsl5-RoOLD6hbhV2AHaLG?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" className='h-[200px] w-[200px]' />
-                        <div className='flex justify-end mt-3'>
-
-                        </div>
-                    </div>
-
+                        :
+                        <p className='py-8 text-center text-lg font-bold'>No books purchased yet</p>
+                    }
                 </div>
             }
 

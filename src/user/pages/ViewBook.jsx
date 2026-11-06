@@ -2,39 +2,73 @@ import React, { useState } from 'react'
 import UserHeader from '../components/UserHeader'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackward, faCamera, faEye, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { getSingleBookAPI, paymentAPI } from '../../services/allAPI'
+import { useParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import axiosInstance from '../../api/axiosinstance'
 
 
 function ViewBook() {
     const [modalStatus, setModalStatus] = useState(false)
+    const [bookDetails, setBookDetails] = useState()
+    console.log(bookDetails);
+
+
+    const { id } = useParams()
+    console.log(id);
+
+
+    useEffect(() => {
+        getBook()
+    }, [])
+
+    const getBook = async () => {
+        const res = await getSingleBookAPI(id)
+        console.log(res);
+        if (res.status == 200) {
+            setBookDetails(res.data)
+        }
+
+    }
+
+    const makePayment = async () => {
+        const res = await paymentAPI(id)
+        console.log(res);
+        if(res.status==200){
+            const { checkoutURL }=res.data
+            window.location.href=checkoutURL
+        }
+        
+    }
     return (
         <div>
             <UserHeader />
             <div className='m-5 border border-gray-900 rounded flex '>
                 <div>
-                    <img src="https://tse1.mm.bing.net/th/id/OIP.hUNBARsl5-RoOLD6hbhV2AHaLG?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="" className='p-5 h-[400px]' />
+                    <img src={bookDetails?.imageUrl} alt="" className='p-5 h-[400px]' />
                 </div>
                 <div className='flex flex-col items-center w-full'>
-                    <h4 className='my-5 font-bold text-xl'>RICH DAD AND POOR DAD</h4>
-                    <h4 className='text-blue-600 '>- Author</h4>
+                    <h4 className='my-5 font-bold text-xl'>{bookDetails?.title}</h4>
+                    <h4 className='text-blue-600 '>- {bookDetails?.author}</h4>
                     <div className='mt-10'>
                         <div className='md:grid grid-cols-3 '>
                             <div className='mx-30'>
-                                <h4 className='font-bold'>Publisher:Warner Books</h4>
-                                <h4 className='my-5 font-bold'>Category:	Personal finance</h4>
+                                <h4 className='font-bold'>Publisher:{bookDetails?.publisher}</h4>
+                                <h4 className='my-5 font-bold'>Category:	{bookDetails?.category}</h4>
                             </div>
                             <div className='mx-30'>
-                                <h4 className='font-bold'>Language:	English</h4>
-                                <h4 className='my-5 font-bold'>Real Price:INR 800</h4>
+                                <h4 className='font-bold'>Language:	{bookDetails?.language}</h4>
+                                <h4 className='my-5 font-bold'>Real Price:INR {bookDetails?.price}</h4>
                             </div>
                             <div className='mx-30'>
-                                <h4 className='font-bold'>No.of pages:	336 or 207</h4>
-                                <h4 className='my-5 font-bold'>ISBN:	0-446-67745-0</h4>
+                                <h4 className='font-bold'>No.of pages:	{bookDetails?.pages}</h4>
+                                <h4 className='my-5 font-bold'>ISBN:	{bookDetails?.isbn}</h4>
                             </div>
 
                         </div>
                         <div className='mx-30 text-justify my-5'>
                             <p className='font-bold'>
-                                Rich Dad Poor Dad is a personal finance book by Robert Kiyosaki that draws on his experiences with two father figures: his biological father, the “Poor Dad,” and his best friend’s father, the “Rich Dad”. The book emphasizes the stark differences in mindset and approach to money between the two, illustrating how financial education and smart investing can lead to wealth, while conventional paths often leave individuals financially constrained
+                                {bookDetails?.abstract}
                             </p>
                         </div>
                         <div className='flex justify-end my-5'>
@@ -42,8 +76,8 @@ function ViewBook() {
                                 <FontAwesomeIcon icon={faBackward} />
                                 <span>Back</span>
                             </button>
-                            <button className='bg-green-300 p-2 rounded mx-5'>
-                                Buy $ 13
+                            <button onClick={()=>makePayment(id)} className='bg-green-300 p-2 rounded mx-5'>
+                                Buy INR {bookDetails?.price}
                             </button>
                         </div>
                     </div>
@@ -72,10 +106,12 @@ function ViewBook() {
                                         <FontAwesomeIcon icon={faCamera} className='text-blue-700' />
                                         <span className='mx-3'> camera clicks of the books in the seller hands.</span>
                                     </p>
-                                    <div className='md:flex flex-col items-center my-5'>
-                                        <img src="" alt="" className='h-[200px] w-[200px]'/>
-                                        <img src="" alt="" className='h-[200px] w-[200px]'/>
-                                        <img src="" alt="" className='h-[200px] w-[200px]'/>
+                                    <div className='md:flex flex-col items-center my-5 h-100 overflow-y-auto gap-2'>
+                                        {
+                                            bookDetails?.uploadImages?.map(book => (
+                                                <img src={`${axiosInstance.defaults.baseURL}/uploads/${book}`} alt="" height={'300px'} width={'250px'} className='h-auto max-h-72 w-full max-w-[250px] rounded object-contain' />
+                                            ))
+                                        }
                                     </div>
                                 </div>
                             </div>

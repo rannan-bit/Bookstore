@@ -1,11 +1,43 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import UserHeader from '../components/UserHeader'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEnvelopeOpenText, faLocationDot, faPhone } from '@fortawesome/free-solid-svg-icons'
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons'
+import emailjs from '@emailjs/browser'
+import { toast, ToastContainer } from 'react-toastify'
+
 
 function Contact() {
+    const form = useRef();
+
+    const sendEmail = (e) => {
+        e.preventDefault();
+        console.log(form.current);
+        const { name, email, title } = form.current
+        if (name.value && email.value && title.value) {
+            emailjs.sendForm(import.meta.env.VITE_SERVICE_ID, import.meta.env.VITE_TEMPLATE_ID, form.current, {
+                publicKey: import.meta.env.VITE_PUBLIC_KEY,
+            })
+                .then(
+                    () => {
+                        console.log('SUCCESS!');
+                        toast.success("Thankyou for contacting with us...Our team will get back to you!!!")
+
+                    },
+                    (error) => {
+                        console.log('FAILED...', error.text);
+                    },
+                );
+
+        }
+        else {
+            toast.warning("please fill the form completely")
+        }
+
+
+
+    };
     return (
         <div>
             <UserHeader />
@@ -49,19 +81,19 @@ function Contact() {
                 </div>
 
                 <div className='md:grid grid-cols-2 p-5 my-5'>
-                    <div className='bg-gray-400 mx-10 rounded'>
+                    <form ref={form} onSubmit={sendEmail} className='bg-gray-400 mx-10 rounded'>
                         <h1 className='text-center font-bold p-5'>Send me Message</h1>
                         <div className='p-3'>
-                            <input type="text" placeholder='Name' className='bg-white w-full p-2 rounded' />
-                            <input type="text" placeholder='Email' className='bg-white w-full p-2 my-5 rounded' />
-                            <textarea type="text" placeholder='message' rows={8} className='bg-white w-full p-2 rounded' />
+                            <input name='name' type="text" placeholder='Name' className='bg-white w-full p-2 rounded' />
+                            <input name='email' type="text" placeholder='Email' className='bg-white w-full p-2 my-5 rounded' />
+                            <textarea name='title' type="text" placeholder='message' rows={8} className='bg-white w-full p-2 rounded' />
                         </div>
                         <div className='p-3'>
-                            <button className='w-full bg-gray-900 text-white rounded p-2'>Submit <FontAwesomeIcon icon={faPaperPlane}/></button>
+                            <button type='submit' className='w-full bg-gray-900 text-white rounded p-2'>Submit <FontAwesomeIcon icon={faPaperPlane} /></button>
                         </div>
 
 
-                    </div>
+                    </form>
                     <div className=' p-3 w-full'>
                         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125218.47361681562!2d75.72841358158635!3d11.255723875380596!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba65938563d4747%3A0x32150641ca32ecab!2sKozhikode%2C%20Keralam!5e0!3m2!1sen!2sin!4v1790766714633!5m2!1sen!2sin" width="100%" height="450" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
                     </div>
@@ -70,6 +102,7 @@ function Contact() {
                     </div>
                 </div>
             </div>
+            <ToastContainer position='top-center' theme='colored' autoClose={3000} />
         </div>
     )
 }

@@ -4,13 +4,19 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import SearchContext from './context/SearchContext.jsx'
+import RouterGuardContext from './context/RouterGuardContext.jsx'
 
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <GoogleOAuthProvider clientId='911895666255-3ntu8ib3ceog1vljbbjo48l3kbo7sk1k.apps.googleusercontent.com'>
-        <App />
+        <SearchContext>
+          <RouterGuardContext>
+            <App />
+          </RouterGuardContext>
+        </SearchContext>
       </GoogleOAuthProvider>
     </BrowserRouter>
 
