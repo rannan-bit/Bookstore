@@ -3,12 +3,13 @@ import UserHeader from '../components/UserHeader'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBackward, faCamera, faEye, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { getSingleBookAPI, paymentAPI } from '../../services/allAPI'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect } from 'react'
 import axiosInstance from '../../api/axiosinstance'
 
 
 function ViewBook() {
+    const navigate = useNavigate()
     const [modalStatus, setModalStatus] = useState(false)
     const [bookDetails, setBookDetails] = useState()
     console.log(bookDetails);
@@ -34,11 +35,11 @@ function ViewBook() {
     const makePayment = async () => {
         const res = await paymentAPI(id)
         console.log(res);
-        if(res.status==200){
-            const { checkoutURL }=res.data
-            window.location.href=checkoutURL
+        if (res.status == 200) {
+            const { checkoutURL } = res.data
+            window.location.href = checkoutURL
         }
-        
+
     }
     return (
         <div>
@@ -72,11 +73,11 @@ function ViewBook() {
                             </p>
                         </div>
                         <div className='flex justify-end my-5'>
-                            <button className='bg-blue-300 p-2 rounded'>
+                            <button onClick={()=>navigate(-1)} className='bg-blue-300 p-2 rounded'>
                                 <FontAwesomeIcon icon={faBackward} />
                                 <span>Back</span>
                             </button>
-                            <button onClick={()=>makePayment(id)} className='bg-green-300 p-2 rounded mx-5'>
+                            <button onClick={() => makePayment(id)} className='bg-green-300 p-2 rounded mx-5'>
                                 Buy INR {bookDetails?.price}
                             </button>
                         </div>
